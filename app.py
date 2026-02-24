@@ -6,7 +6,7 @@ import streamlit as st
 # ---- PAGE CONFIG ----
 st.set_page_config(
     page_title="DesignerLogic.ai",
-    layout=" wide "
+    layout="centered"
 )
 
 # ---- HEADER ----
