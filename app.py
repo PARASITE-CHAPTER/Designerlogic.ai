@@ -1,105 +1,148 @@
 import streamlit as st
 
-# ---------------- PAGE CONFIG ----------------
+# ---------------------------------------------------
+# PAGE CONFIG
+# ---------------------------------------------------
 st.set_page_config(
-    page_title="Designerlogic.ai",
+    page_title="DesignerLogic.ai",
     layout="centered"
 )
 
-# ---------------- CUSTOM CSS ----------------
+# ---------------------------------------------------
+# CUSTOM CSS (CENTER ALIGN CONTENT)
+# ---------------------------------------------------
 st.markdown("""
 <style>
 
-.main {
-    max-width: 700px;
+.block-container{
+    max-width: 850px;
     margin: auto;
 }
 
-.title {
+h1, h2, h3, p {
     text-align: center;
-    font-size: 40px;
-    font-weight: 700;
-    margin-bottom: 5px;
 }
 
-.subtitle {
-    text-align: center;
-    font-size: 18px;
-    color: #666;
-    margin-bottom: 40px;
-}
-
-.stButton>button {
-    width: 100%;
-    border-radius: 8px;
-    height: 45px;
-    font-size: 16px;
+div.stButton > button {
+    display: block;
+    margin: auto;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- HEADER ----------------
+# ---------------------------------------------------
+# HEADER
+# ---------------------------------------------------
+st.title("DesignerLogic.ai")
+
 st.markdown(
-    "<div class='title'>Designerlogic.ai</div>",
+    "<p style='font-size:18px;'>AI-Driven Building Feasibility, Compliance & Estimation</p>",
     unsafe_allow_html=True
 )
 
-st.markdown(
-    "<div class='subtitle'>AI-Powered Building Compliance & Cost Intelligence Platform</div>",
-    unsafe_allow_html=True
-)
+st.markdown("---")
 
-# ---------------- FORM ----------------
+# ---------------------------------------------------
+# PROJECT INPUTS
+# ---------------------------------------------------
 st.header("Project Inputs")
-
-project_name = st.text_input("Project Name")
 
 building_type = st.selectbox(
     "Building Type",
-    [
-        "Residential",
-        "Commercial",
-        "Mixed Use",
-        "Industrial",
-        "Institutional"
-    ]
+    ["Residential", "Commercial", "Mixed Use"]
 )
 
-plot_area = st.number_input("Plot Area (sq.m)", min_value=0.0)
-builtup_area = st.number_input("Built-up Area (sq.m)", min_value=0.0)
-floors = st.number_input("Number of Floors", min_value=1, step=1)
+plot_area = st.number_input(
+    "Plot Area (sq.ft)",
+    min_value=1.0,
+    value=1000.0,
+    step=100.0
+)
 
-# -------- FIRE CLASSIFICATION LOGIC --------
-fire_classification = None
+road_width = st.number_input(
+    "Road Width (m)",
+    min_value=1.0,
+    value=9.0,
+    step=1.0
+)
 
-if building_type != "Residential":
-    fire_classification = st.selectbox(
-        "Fire Classification",
-        [
-            "Low Hazard",
-            "Moderate Hazard",
-            "High Hazard"
-        ]
-    )
+generate = st.button("Generate Feasibility Report")
 
-# ---------------- GENERATE REPORT ----------------
-if st.button("Generate Compliance Report"):
+# ---------------------------------------------------
+# CALCULATIONS
+# ---------------------------------------------------
+if generate:
 
-    st.success("Report Generated Successfully ✅")
+    # ---- Zoning Logic (Sample Rule Engine) ----
+    if road_width < 9:
+        fsi = 1.5
+        height_limit = 10
+        floors = 3
+        setback_front = 3
+        setback_side = 1.5
 
-    st.subheader("Project Summary")
+    elif road_width < 18:
+        fsi = 2.5
+        height_limit = 20
+        floors = 6
+        setback_front = 5
+        setback_side = 3
 
-    st.write(f"**Project Name:** {project_name}")
-    st.write(f"**Building Type:** {building_type}")
-    st.write(f"**Plot Area:** {plot_area} sq.m")
-    st.write(f"**Built-up Area:** {builtup_area} sq.m")
-    st.write(f"**Floors:** {floors}")
-
-    if building_type != "Residential":
-        st.write(f"**Fire Classification:** {fire_classification}")
     else:
-        st.write("**Fire Classification:** Not Required (Residential Project)")
+        fsi = 3.5
+        height_limit = 30
+        floors = 9
+        setback_front = 7
+        setback_side = 4
 
-    # Placeholder for next step
-    st.info("PDF Download Button will be added next.")
+    # ---- Area Calculations ----
+    total_builtup = plot_area * fsi
+    typical_floor = total_builtup / floors
+    sellable_area = total_builtup * 0.85
+
+    st.markdown("---")
+    st.header("Feasibility Report")
+
+    # ---------------------------------------------------
+    # BASIC CONTROLS
+    # ---------------------------------------------------
+    st.subheader("Basic Controls")
+
+    st.markdown(f"**Permissible FSI:** `{fsi}`")
+    st.markdown(f"**Height Limit:** `{height_limit} m`")
+    st.markdown(f"**Estimated Floors (Zone-based):** `{floors}`")
+
+    # ---------------------------------------------------
+    # AREA STATEMENT
+    # ---------------------------------------------------
+    st.subheader("Area Statement")
+
+    st.markdown(f"**Total Built-up Area:** `{total_builtup:,.2f} sq.ft`")
+    st.markdown(f"**Typical Floor Plate:** `{typical_floor:,.2f} sq.ft`")
+    st.markdown(f"**Sellable Area:** `{sellable_area:,.2f} sq.ft`")
+
+    # ---------------------------------------------------
+    # SETBACKS
+    # ---------------------------------------------------
+    st.subheader("Setbacks (m)")
+
+    st.markdown(f"**Front:** `{setback_front}`")
+    st.markdown(f"**Side:** `{setback_side}`")
+
+    # ---------------------------------------------------
+    # FIRE CLASSIFICATION
+    # (NOT REQUIRED FOR RESIDENTIAL)
+    # ---------------------------------------------------
+    if building_type in ["Commercial", "Mixed Use"]:
+
+        st.subheader("Fire Classification")
+
+        if height_limit <= 15:
+            fire_class = "Low Rise"
+        elif height_limit <= 24:
+            fire_class = "Mid Rise"
+        else:
+            fire_class = "High Rise"
+
+        st.markdown(f"**Building Category:** `{fire_class}`")
