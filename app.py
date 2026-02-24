@@ -132,22 +132,24 @@ def fire_safety_analysis(building_type, height):
 # STREAMLIT UI
 # =====================================================
 
-st.title("Designerlogic.ai — Feasibility Consultant")
+st.subheader("Project Inputs")
 
-col1, col2, col3 = st.columns(3)
+building_type = st.selectbox(
+    "Building Type",
+    ["Residential", "Commercial", "Mixed"]
+)
 
-with col1:
-    building_type = st.selectbox(
-        "Building Type",
-        ["Residential", "Commercial", "Mixed"]
-    )
+plot_area = st.number_input(
+    "Plot Area (sq.ft)",
+    min_value=1.0,
+    step=100.0
+)
 
-with col2:
-    plot_area = st.number_input("Plot Area (sq.ft)", min_value=1.0)
-
-with col3:
-    road_width = st.number_input("Road Width (m)", min_value=1.0)
-
+road_width = st.number_input(
+    "Road Width (m)",
+    min_value=1.0,
+    step=1.0
+)
 
 # =====================================================
 # RUN ENGINE
