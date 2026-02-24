@@ -3,10 +3,17 @@
 # =====================================================
 
 import streamlit as st
+# ---- PAGE CONFIG ----
+st.set_page_config(
+    page_title="DesignerLogic.ai",
+    layout="wide"
+)
+
+# ---- HEADER ----
+st.title("DesignerLogic.ai")
+st.caption("AI Assisted Building Compliance & Estimation Tool")
 import pandas as pd
 import math
-
-st.set_page_config(page_title="Designerlogic.ai", layout="wide")
 
 # =====================================================
 # LOAD DATABASE
