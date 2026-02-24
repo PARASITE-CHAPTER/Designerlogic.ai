@@ -47,6 +47,41 @@ def load_data():
 
 fsi_rules, setback_rules, parking_rules, height_rules = load_data()
 
+import streamlit as st
+
+# ---- PAGE CONFIG ----
+st.set_page_config(
+    page_title="DesignerLogic.ai",
+    layout="wide"
+)
+
+# ---- CENTER WHOLE APP ----
+st.markdown("""
+<style>
+
+/* Main block container */
+.block-container {
+    max-width: 900px;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Center buttons */
+.stButton > button {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Center selectboxes & inputs spacing */
+div[data-baseweb="select"] {
+    text-align: left;
+}
+
+</style>
+""", unsafe_allow_html=True)
 # =====================================================
 # RULE ENGINE FUNCTIONS
 # =====================================================
