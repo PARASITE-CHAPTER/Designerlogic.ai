@@ -1,4 +1,9 @@
 import streamlit as st
+import io
+
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
 
 # ---------------------------------------------------
 # PAGE CONFIG
@@ -44,6 +49,27 @@ st.markdown(
 st.markdown("---")
 
 # ---------------------------------------------------
+# PDF GENERATOR
+# ---------------------------------------------------
+def generate_pdf(report_lines):
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+
+    styles = getSampleStyleSheet()
+    story = []
+
+    for line in report_lines:
+        story.append(Paragraph(line, styles["Normal"]))
+        story.append(Spacer(1, 12))
+
+    doc.build(story)
+
+    buffer.seek(0)
+    return buffer
+
+
+# ---------------------------------------------------
 # PROJECT INPUTS
 # ---------------------------------------------------
 st.header("Project Inputs")
@@ -74,7 +100,9 @@ generate = st.button("Generate Feasibility Report")
 # ---------------------------------------------------
 if generate:
 
-    # ---- Zoning Logic (Sample Rule Engine) ----
+    report_text = []
+
+    # ---- Zoning Logic ----
     if road_width < 9:
         fsi = 1.5
         height_limit = 10
@@ -101,39 +129,48 @@ if generate:
     typical_floor = total_builtup / floors
     sellable_area = total_builtup * 0.85
 
+    # ---------------------------------------------------
+    # REPORT UI
+    # ---------------------------------------------------
     st.markdown("---")
     st.header("Feasibility Report")
 
-    # ---------------------------------------------------
+    report_text.append("DESIGNERLOGIC.AI FEASIBILITY REPORT")
+    report_text.append(f"Building Type: {building_type}")
+
     # BASIC CONTROLS
-    # ---------------------------------------------------
     st.subheader("Basic Controls")
 
     st.markdown(f"**Permissible FSI:** `{fsi}`")
     st.markdown(f"**Height Limit:** `{height_limit} m`")
     st.markdown(f"**Estimated Floors (Zone-based):** `{floors}`")
 
-    # ---------------------------------------------------
+    report_text.append(f"Permissible FSI: {fsi}")
+    report_text.append(f"Height Limit: {height_limit} m")
+    report_text.append(f"Estimated Floors (Zone-based): {floors}")
+
     # AREA STATEMENT
-    # ---------------------------------------------------
     st.subheader("Area Statement")
 
     st.markdown(f"**Total Built-up Area:** `{total_builtup:,.2f} sq.ft`")
     st.markdown(f"**Typical Floor Plate:** `{typical_floor:,.2f} sq.ft`")
     st.markdown(f"**Sellable Area:** `{sellable_area:,.2f} sq.ft`")
 
-    # ---------------------------------------------------
+    report_text.append(f"Total Built-up Area: {total_builtup:,.2f} sq.ft")
+    report_text.append(f"Typical Floor Plate: {typical_floor:,.2f} sq.ft")
+    report_text.append(f"Sellable Area: {sellable_area:,.2f} sq.ft")
+
     # SETBACKS
-    # ---------------------------------------------------
     st.subheader("Setbacks (m)")
 
     st.markdown(f"**Front:** `{setback_front}`")
     st.markdown(f"**Side:** `{setback_side}`")
 
-    # ---------------------------------------------------
+    report_text.append(f"Front Setback: {setback_front} m")
+    report_text.append(f"Side Setback: {setback_side} m")
+
     # FIRE CLASSIFICATION
-    # (NOT REQUIRED FOR RESIDENTIAL)
-    # ---------------------------------------------------
+    # NOT REQUIRED FOR RESIDENTIAL
     if building_type in ["Commercial", "Mixed Use"]:
 
         st.subheader("Fire Classification")
@@ -146,3 +183,19 @@ if generate:
             fire_class = "High Rise"
 
         st.markdown(f"**Building Category:** `{fire_class}`")
+
+        report_text.append(f"Fire Classification: {fire_class}")
+
+    # ---------------------------------------------------
+    # DOWNLOAD PDF BUTTON
+    # ---------------------------------------------------
+    st.markdown("---")
+
+    pdf_file = generate_pdf(report_text)
+
+    st.download_button(
+        label="Download Feasibility Report (PDF)",
+        data=pdf_file,
+        file_name="DesignerLogic_Feasibility_Report.pdf",
+        mime="application/pdf"
+    )
