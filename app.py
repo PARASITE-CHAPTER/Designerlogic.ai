@@ -1,278 +1,143 @@
-ter# =====================================================
-# DESIGNERLOGIC.AI — FEASIBILITY WEB APP
-# =====================================================
-
-import streamlit as st
-# ---- PAGE CONFIG ----
-st.set_page_config(
-    page_title="DesignerLogic.ai",
-    layout="centered"
-)
-
-# ---- HEADER ----
-# ---- CENTERED HEADER ----
-st.markdown("""
-<div style='text-align: center; padding-top: 10px; padding-bottom: 25px;'>
-
-<h1 style='margin-bottom: 5px;'>
-DesignerLogic.ai
-</h1>
-
-<p style='color: #9aa0a6; font-size: 16px;'>
-From Plot Data to Project Feasibility
-</p>
-
-</div>
-""", unsafe_allow_html=True)
-import pandas as pd
-import math
-
-# =====================================================
-# LOAD DATABASE
-# =====================================================
-
-FILE_NAME = "CMDA_RULE_ENGINE_TEMPLATE_V3.xlsx"
-
-@st.cache_data
-def load_data():
-    xls = pd.ExcelFile(FILE_NAME)
-
-    fsi_rules = pd.read_excel(xls, "1_FSI_RULES")
-    setback_rules = pd.read_excel(xls, "2_SETBACK_RULES")
-    parking_rules = pd.read_excel(xls, "3_PARKING_RULES")
-    height_rules = pd.read_excel(xls, "4_HEIGHT_RULES")
-
-    return fsi_rules, setback_rules, parking_rules, height_rules
-
-
-fsi_rules, setback_rules, parking_rules, height_rules = load_data()
-
 import streamlit as st
 
-# ---- PAGE CONFIG ----
+# ---------------------------------------------------
+# PAGE CONFIG
+# ---------------------------------------------------
 st.set_page_config(
     page_title="DesignerLogic.ai",
-    layout="wide"
+    layout="centered",
 )
 
-# ---- CENTER WHOLE APP ----
+# ---------------------------------------------------
+# CUSTOM CSS (CENTER ALIGN + CLEAN UI)
+# ---------------------------------------------------
 st.markdown("""
 <style>
 
-/* Main block container */
-.block-container {
-    max-width: 900px;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-    margin-left: auto;
-    margin-right: auto;
+.block-container{
+    max-width: 850px;
+    margin: auto;
 }
 
-/* Center buttons */
-.stButton > button {
+h1, h2, h3, p {
+    text-align: center;
+}
+
+div.stButton > button {
     display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* Center selectboxes & inputs spacing */
-div[data-baseweb="select"] {
-    text-align: left;
+    margin: auto;
 }
 
 </style>
 """, unsafe_allow_html=True)
-# =====================================================
-# RULE ENGINE FUNCTIONS
-# =====================================================
 
-def get_fsi(building_type, road_width):
+# ---------------------------------------------------
+# HEADER
+# ---------------------------------------------------
+st.title("DesignerLogic.ai")
 
-    rule = fsi_rules[
-        (fsi_rules["category"].str.upper().str.startswith(building_type[0])) &
-        (fsi_rules["min_road"] <= road_width) &
-        (fsi_rules["max_road"] > road_width)
-    ]
+st.markdown(
+    "<p style='font-size:18px;'>Plot Data to Project Feasibility</p>",
+    unsafe_allow_html=True
+)
 
-    return float(rule.iloc[0]["max_fsi"])
+st.markdown("---")
 
-
-def get_height_limit(road_width):
-
-    rule = height_rules[
-        height_rules["road_width"] <= road_width
-    ]
-
-    return float(rule.iloc[-1]["max_height"])
-
-
-def get_setback(building_type, height):
-
-    rule = setback_rules[
-        (setback_rules["category"].str.upper().str.startswith(building_type[0])) &
-        (setback_rules["height_min"] <= height) &
-        (setback_rules["height_max"] > height)
-    ]
-
-    row = rule.iloc[0]
-
-    return {
-        "front": float(row["front"]),
-        "side": float(row["side"]),
-        "rear": float(row["rear"])
-    }
-
-
-def calculate_parking(building_type, builtup):
-
-    rule = parking_rules[
-        parking_rules["category"].str.upper().str.startswith(building_type[0])
-    ]
-
-    unit_text = str(rule.iloc[0]["unit"])
-    unit_area = float(unit_text.split("_")[0]) * 10.764  # sqm → sqft
-
-    requirement = float(rule.iloc[0]["requirement"])
-
-    return math.ceil((builtup / unit_area) * requirement)
-
-
-# =====================================================
-# AREA CALCULATION (NON-RESIDENTIAL ONLY)
-# =====================================================
-
-def calculate_area_breakdown(building_type, total_builtup, floors):
-
-    floor_plate = total_builtup / floors
-
-    core_ratio = 0.14   # professional feasibility assumption
-    total_core_area = total_builtup * core_ratio
-
-    result = {
-        "floor_plate": floor_plate,
-        "core_area": total_core_area,
-        "sellable_area": total_builtup - total_core_area
-    }
-
-    return result
-
-
-# =====================================================
-# FIRE CLASSIFICATION
-# =====================================================
-
-def fire_safety_analysis(building_type, height):
-
-    if building_type.startswith("R"):
-        return None
-
-    if height <= 15:
-        category = "Low Rise Building"
-        noc = "Standard Fire Compliance"
-    elif height <= 24:
-        category = "Mid Rise Building"
-        noc = "Fire NOC Required"
-    else:
-        category = "High Rise Building"
-        noc = "High-Rise Fire NOC Required"
-
-    return {
-        "building_class": category,
-        "fire_noc": noc
-    }
-
-
-# =====================================================
-# STREAMLIT UI
-# =====================================================
-
-st.subheader("Project Inputs")
+# ---------------------------------------------------
+# PROJECT INPUTS
+# ---------------------------------------------------
+st.header("Project Inputs")
 
 building_type = st.selectbox(
     "Building Type",
-    ["Residential", "Commercial", "Mixed"]
+    ["Residential", "Commercial"]
 )
 
 plot_area = st.number_input(
     "Plot Area (sq.ft)",
     min_value=1.0,
+    value=1000.0,
     step=100.0
 )
 
 road_width = st.number_input(
     "Road Width (m)",
     min_value=1.0,
+    value=9.0,
     step=1.0
 )
 
-# =====================================================
-# RUN ENGINE
-# =====================================================
+generate = st.button("Generate Feasibility Report")
 
-if st.button("Generate Feasibility Report"):
+# ---------------------------------------------------
+# CALCULATIONS
+# ---------------------------------------------------
+if generate:
 
-    fsi = get_fsi(building_type.upper(), road_width)
-    height_limit = get_height_limit(road_width)
+    # Basic zoning assumptions
+    if road_width < 9:
+        fsi = 1.5
+        height_limit = 10
+        floors = 3
+        setback_front = 3
+        setback_side = 1.5
+    elif road_width < 18:
+        fsi = 2.5
+        height_limit = 20
+        floors = 6
+        setback_front = 5
+        setback_side = 3
+    else:
+        fsi = 3.5
+        height_limit = 30
+        floors = 9
+        setback_front = 7
+        setback_side = 4
 
     total_builtup = plot_area * fsi
-    floors = max(1, math.floor(height_limit / 3.3))
+    typical_floor = total_builtup / floors
+    sellable_area = total_builtup * 0.85
 
-    setbacks = get_setback(building_type.upper(), height_limit)
-    parking_required = calculate_parking(building_type.upper(), total_builtup)
-
-    fire_data = fire_safety_analysis(building_type.upper(), height_limit)
-
-    if not building_type.startswith("R"):
-        area_data = calculate_area_breakdown(
-            building_type.upper(),
-            total_builtup,
-            floors
-        )
-
-    # =====================================================
-    # OUTPUT REPORT
-    # =====================================================
-
+    st.markdown("---")
     st.header("Feasibility Report")
 
+    # ---------------------------------------------------
     # BASIC CONTROLS
+    # ---------------------------------------------------
     st.subheader("Basic Controls")
-    st.write("Permissible FSI:", fsi)
-    st.write("Height Limit:", height_limit, "m")
-    st.write("Estimated Floors (Zone-based):", floors)
 
-    # AREA
+    st.markdown(f"**Permissible FSI:** `{fsi}`")
+    st.markdown(f"**Height Limit:** `{height_limit} m`")
+    st.markdown(f"**Estimated Floors (Zone-based):** `{floors}`")
+
+    # ---------------------------------------------------
+    # AREA STATEMENT
+    # ---------------------------------------------------
     st.subheader("Area Statement")
-    st.write("Total Built-up Area:", round(total_builtup,2), "sq.ft")
 
-    if building_type.startswith("R"):
-        st.write("Built-up Area (Residential):",
-                 round(total_builtup,2), "sq.ft")
-    else:
-        st.write("Typical Floor Plate:",
-                 round(area_data["floor_plate"],2), "sq.ft")
+    st.markdown(f"**Total Built-up Area:** `{total_builtup:,.2f} sq.ft`")
+    st.markdown(f"**Typical Floor Plate:** `{typical_floor:,.2f} sq.ft`")
+    st.markdown(f"**Sellable Area:** `{sellable_area:,.2f} sq.ft`")
 
-        st.write("Sellable Area:",
-                 round(area_data["sellable_area"],2), "sq.ft")
-
+    # ---------------------------------------------------
     # SETBACKS
+    # ---------------------------------------------------
     st.subheader("Setbacks (m)")
-    st.write("Front:", setbacks["front"])
-    st.write("Side:", setbacks["side"])
-    st.write("Rear:", setbacks["rear"])
 
-    # PARKING
-    st.subheader("Parking")
-    st.write("Parking Required:", parking_required, "Cars")
+    st.markdown(f"**Front:** `{setback_front}`")
+    st.markdown(f"**Side:** `{setback_side}`")
 
-    # FIRE CLASSIFICATION
-    if fire_data is not None:
+    # ---------------------------------------------------
+    # FIRE CLASSIFICATION (ONLY NON-RESIDENTIAL)
+    # ---------------------------------------------------
+    if building_type != "Residential":
         st.subheader("Fire Classification")
-        st.write("Building Category:", fire_data["building_class"])
-        st.write("Compliance:", fire_data["fire_noc"])
 
-    # NOTE
-    st.info(
-        "Note: Floor estimation is Zone-based approximation. "
-        "Final approval subject to statutory authority verification."
-    )
+        if height_limit <= 15:
+            fire_class = "Low Rise"
+        elif height_limit <= 24:
+            fire_class = "Mid Rise"
+        else:
+            fire_class = "High Rise"
+
+        st.markdown(f"**Building Category:** `{fire_class}`")
