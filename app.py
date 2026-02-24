@@ -10,8 +10,20 @@ st.set_page_config(
 )
 
 # ---- HEADER ----
-st.title("DesignerLogic.ai")
-st.caption("AI Assisted Building Compliance & Estimation Tool")
+# ---- CENTERED HEADER ----
+st.markdown("""
+<div style='text-align: center; padding-top: 10px; padding-bottom: 25px;'>
+
+<h1 style='margin-bottom: 5px;'>
+DesignerLogic.ai
+</h1>
+
+<p style='color: #9aa0a6; font-size: 16px;'>
+AI Assisted Building Compliance & Estimation Tool
+</p>
+
+</div>
+""", unsafe_allow_html=True)
 import pandas as pd
 import math
 
