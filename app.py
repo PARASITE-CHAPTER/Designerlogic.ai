@@ -1,10 +1,4 @@
 import streamlit as st
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch
-from reportlab.lib.enums import TA_CENTER
-import io
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -56,54 +50,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ---------------- PDF FUNCTION ----------------
-def create_pdf(data):
-
-    buffer = io.BytesIO()
-
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=72,
-        leftMargin=72,
-        topMargin=72,
-        bottomMargin=72,
-    )
-
-    styles = getSampleStyleSheet()
-
-    title_style = ParagraphStyle(
-        name="CenterTitle",
-        parent=styles["Title"],
-        alignment=TA_CENTER
-    )
-
-    body_style = styles["Normal"]
-
-    story = []
-
-    # Title
-    story.append(Paragraph("Designerlogic.ai", title_style))
-    story.append(Spacer(1, 0.3 * inch))
-
-    story.append(Paragraph(
-        "Building Compliance & Estimation Report",
-        styles["Heading2"]
-    ))
-
-    story.append(Spacer(1, 0.3 * inch))
-
-    # Project Details
-    for key, value in data.items():
-        story.append(Paragraph(f"<b>{key}:</b> {value}", body_style))
-        story.append(Spacer(1, 0.15 * inch))
-
-    doc.build(story)
-
-    buffer.seek(0)
-    return buffer
-
-
 # ---------------- FORM ----------------
 st.header("Project Inputs")
 
@@ -124,7 +70,7 @@ plot_area = st.number_input("Plot Area (sq.m)", min_value=0.0)
 builtup_area = st.number_input("Built-up Area (sq.m)", min_value=0.0)
 floors = st.number_input("Number of Floors", min_value=1, step=1)
 
-# Fire classification hidden for residential
+# -------- FIRE CLASSIFICATION LOGIC --------
 fire_classification = None
 
 if building_type != "Residential":
@@ -142,31 +88,18 @@ if st.button("Generate Compliance Report"):
 
     st.success("Report Generated Successfully ✅")
 
-    summary_data = {
-        "Project Name": project_name,
-        "Building Type": building_type,
-        "Plot Area": f"{plot_area} sq.m",
-        "Built-up Area": f"{builtup_area} sq.m",
-        "Floors": floors,
-    }
-
-    if building_type != "Residential":
-        summary_data["Fire Classification"] = fire_classification
-    else:
-        summary_data["Fire Classification"] = "Not Required (Residential Project)"
-
     st.subheader("Project Summary")
 
-    for k, v in summary_data.items():
-        st.write(f"**{k}:** {v}")
+    st.write(f"**Project Name:** {project_name}")
+    st.write(f"**Building Type:** {building_type}")
+    st.write(f"**Plot Area:** {plot_area} sq.m")
+    st.write(f"**Built-up Area:** {builtup_area} sq.m")
+    st.write(f"**Floors:** {floors}")
 
-    # -------- CREATE PDF --------
-    pdf_file = create_pdf(summary_data)
+    if building_type != "Residential":
+        st.write(f"**Fire Classification:** {fire_classification}")
+    else:
+        st.write("**Fire Classification:** Not Required (Residential Project)")
 
-    # -------- DOWNLOAD BUTTON --------
-    st.download_button(
-        label="⬇ Download PDF Report",
-        data=pdf_file,
-        file_name=f"{project_name}_Compliance_Report.pdf",
-        mime="application/pdf"
-    )
+    # Placeholder for next step
+    st.info("PDF Download Button will be added next.")
