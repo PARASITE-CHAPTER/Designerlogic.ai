@@ -70,7 +70,7 @@ if st.button("Generate Feasibility Report"):
     st.subheader("Basic Controls")
     st.write("Permissible FSI:", fsi)
     st.write("Height Limit:", height_limit, "m")
-    st.write("Estimated Floors (Area based):", floors)
+    st.write("Estimated Floors (Zone based):", floors)
 
     st.subheader("Area Statement")
     st.write("Total Built-up Area:", round(total_builtup, 2), "sq.ft")
@@ -87,6 +87,6 @@ if st.button("Generate Feasibility Report"):
     st.write("Building Category:", fire_category(height_limit))
 
     st.info(
-        "Note: Floor estimation is area-based approximation. "
+        "Note: Floor estimation is Zone-based approximation. "
         "Final approval subject to statutory authority verification."
     )
