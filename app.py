@@ -14,7 +14,8 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------
-# CUSTOM CSS (CENTER ALIGN CONTENT)
+# CUSTOM CSS
+# (CENTER HEADER + LEFT REPORT)
 # ---------------------------------------------------
 st.markdown("""
 <style>
@@ -24,13 +25,19 @@ st.markdown("""
     margin: auto;
 }
 
-h1, h2, h3, p {
-    text-align: center;
+/* Center only titles */
+h1, h2 {
+    text-align:center;
+}
+
+/* LEFT align report content */
+.report-left {
+    text-align:left;
 }
 
 div.stButton > button {
-    display: block;
-    margin: auto;
+    display:block;
+    margin:auto;
 }
 
 </style>
@@ -42,7 +49,7 @@ div.stButton > button {
 st.title("DesignerLogic.ai")
 
 st.markdown(
-    "<p style='font-size:18px;'>AI-Driven Building Feasibility, Compliance & Estimation</p>",
+    "<p style='font-size:18px;text-align:center;'>AI-Driven Building Feasibility, Compliance & Estimation</p>",
     unsafe_allow_html=True
 )
 
@@ -129,11 +136,10 @@ if generate:
     typical_floor = total_builtup / floors
     sellable_area = total_builtup * 0.85
 
-    # ---------------------------------------------------
-    # REPORT UI
-    # ---------------------------------------------------
     st.markdown("---")
     st.header("Feasibility Report")
+
+    st.markdown('<div class="report-left">', unsafe_allow_html=True)
 
     report_text.append("DESIGNERLOGIC.AI FEASIBILITY REPORT")
     report_text.append(f"Building Type: {building_type}")
@@ -141,36 +147,41 @@ if generate:
     # BASIC CONTROLS
     st.subheader("Basic Controls")
 
-    st.markdown(f"**Permissible FSI:** `{fsi}`")
-    st.markdown(f"**Height Limit:** `{height_limit} m`")
-    st.markdown(f"**Estimated Floors (Zone-based):** `{floors}`")
+    st.markdown(f"**Permissible FSI:** {fsi}")
+    st.markdown(f"**Height Limit:** {height_limit} m")
+    st.markdown(f"**Estimated Floors (Zone-based):** {floors}")
 
-    report_text.append(f"Permissible FSI: {fsi}")
-    report_text.append(f"Height Limit: {height_limit} m")
-    report_text.append(f"Estimated Floors (Zone-based): {floors}")
+    report_text += [
+        f"Permissible FSI: {fsi}",
+        f"Height Limit: {height_limit} m",
+        f"Estimated Floors (Zone-based): {floors}"
+    ]
 
     # AREA STATEMENT
     st.subheader("Area Statement")
 
-    st.markdown(f"**Total Built-up Area:** `{total_builtup:,.2f} sq.ft`")
-    st.markdown(f"**Typical Floor Plate:** `{typical_floor:,.2f} sq.ft`")
-    st.markdown(f"**Sellable Area:** `{sellable_area:,.2f} sq.ft`")
+    st.markdown(f"**Total Built-up Area:** {total_builtup:,.2f} sq.ft")
+    st.markdown(f"**Typical Floor Plate:** {typical_floor:,.2f} sq.ft")
+    st.markdown(f"**Sellable Area:** {sellable_area:,.2f} sq.ft")
 
-    report_text.append(f"Total Built-up Area: {total_builtup:,.2f} sq.ft")
-    report_text.append(f"Typical Floor Plate: {typical_floor:,.2f} sq.ft")
-    report_text.append(f"Sellable Area: {sellable_area:,.2f} sq.ft")
+    report_text += [
+        f"Total Built-up Area: {total_builtup:,.2f} sq.ft",
+        f"Typical Floor Plate: {typical_floor:,.2f} sq.ft",
+        f"Sellable Area: {sellable_area:,.2f} sq.ft"
+    ]
 
     # SETBACKS
     st.subheader("Setbacks (m)")
 
-    st.markdown(f"**Front:** `{setback_front}`")
-    st.markdown(f"**Side:** `{setback_side}`")
+    st.markdown(f"Front: {setback_front}")
+    st.markdown(f"Side: {setback_side}")
 
-    report_text.append(f"Front Setback: {setback_front} m")
-    report_text.append(f"Side Setback: {setback_side} m")
+    report_text += [
+        f"Front Setback: {setback_front} m",
+        f"Side Setback: {setback_side} m"
+    ]
 
-    # FIRE CLASSIFICATION
-    # NOT REQUIRED FOR RESIDENTIAL
+    # FIRE CLASSIFICATION (NOT FOR RESIDENTIAL)
     if building_type in ["Commercial", "Mixed Use"]:
 
         st.subheader("Fire Classification")
@@ -182,12 +193,33 @@ if generate:
         else:
             fire_class = "High Rise"
 
-        st.markdown(f"**Building Category:** `{fire_class}`")
-
+        st.markdown(f"Building Category: {fire_class}")
         report_text.append(f"Fire Classification: {fire_class}")
 
     # ---------------------------------------------------
-    # DOWNLOAD PDF BUTTON
+    # NOTE SECTION
+    # ---------------------------------------------------
+    st.markdown("---")
+    st.subheader("Notes")
+
+    note_text = """
+• Estimated floors are zone-based approximations and subject to authority approval.<br>
+• FSI, setbacks and height limits are indicative planning values.<br>
+• Detailed architectural and statutory verification required before approvals.<br>
+• Fire compliance applicable only for Commercial and Mixed Use developments.
+"""
+
+    st.markdown(note_text, unsafe_allow_html=True)
+
+    report_text.append("NOTES:")
+    report_text.append("Estimated floors are zone-based approximations.")
+    report_text.append("Values subject to authority approval.")
+    report_text.append("Fire compliance applies only to Commercial and Mixed Use.")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ---------------------------------------------------
+    # DOWNLOAD PDF
     # ---------------------------------------------------
     st.markdown("---")
 
