@@ -1,92 +1,65 @@
-import streamlit as st
-import math
+# ==============================
+# ===== FEASIBILITY REPORT UI ==
+# ==============================
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(
-    page_title="Designerlogic.ai",
-    layout="centered"
-)
+st.title("Feasibility Report")
 
-st.title("Designerlogic.ai")
-st.subheader("Feasibility Engine — CMDA Based")
+# ---------- BASIC CONTROLS ----------
+st.subheader("Basic Controls")
 
-# ---------------- USER INPUT ----------------
-building_type = st.selectbox(
-    "Building Type",
-    ["Residential", "Commercial", "Mixed"]
-)
-
-plot_area = st.number_input(
-    "Plot Area (sq.ft)",
-    min_value=100.0,
-    value=3000.0
-)
-
-road_width = st.number_input(
-    "Road Width (m)",
-    min_value=3.0,
-    value=12.0
-)
-
-# ---------------- MOCK RULE ENGINE ----------------
-# (Your real functions will replace this later)
-
-def get_fsi(bt, road):
-    if bt == "Commercial":
-        return 3.5
-    elif bt == "Mixed":
-        return 2.5
-    return 2.0
-
-def get_height_limit(road):
-    if road >= 30:
-        return 30
-    elif road >= 18:
-        return 24
-    return 15
-
-def fire_category(height):
-    if height <= 15:
-        return "Low Rise Building"
-    elif height <= 24:
-        return "Mid Rise Building"
-    return "High Rise Building"
+st.write("Permissible FSI:", fsi)
+st.write("Height Limit:", height_limit, "m")
+st.write("Estimated Floors (Zone-based):", floors)
 
 
-# ---------------- CALCULATION ----------------
-if st.button("Generate Feasibility Report"):
+# ---------- AREA STATEMENT ----------
+st.subheader("Area Statement")
 
-    fsi = get_fsi(building_type, road_width)
-    height_limit = get_height_limit(road_width)
+st.write("Total Built-up Area:", round(total_builtup,2), "sq.ft")
 
-    total_builtup = plot_area * fsi
-    floors = max(1, math.floor(height_limit / 3.3))
-    floor_plate = total_builtup / floors
+if building_type.startswith("R"):
+    st.write("Built-up Area (Residential):",
+             round(total_builtup,2), "sq.ft")
+else:
+    st.write("Typical Floor Plate:",
+             round(area_data["floor_plate"],2), "sq.ft")
 
-    st.divider()
+    st.write("Sellable Area:",
+             round(area_data["sellable_area"],2), "sq.ft")
 
-    st.header("Feasibility Report")
 
-    st.subheader("Basic Controls")
-    st.write("Permissible FSI:", fsi)
-    st.write("Height Limit:", height_limit, "m")
-    st.write("Estimated Floors (Zone based):", floors)
+# ---------- SETBACKS ----------
+st.subheader("Setbacks (m)")
 
-    st.subheader("Area Statement")
-    st.write("Total Built-up Area:", round(total_builtup, 2), "sq.ft")
-    st.write("Typical Floor Plate:", round(floor_plate, 2), "sq.ft")
+st.write("Front:", setbacks["front"])
+st.write("Side:", setbacks["side"])
+st.write("Rear:", setbacks["rear"])
 
-    if building_type == "Commercial":
-        sellable = total_builtup * 0.85
-        st.write("Sellable Area:", round(sellable, 2), "sq.ft")
-    else:
-        carpet = total_builtup * 0.75
-        st.write("Carpet Area:", round(carpet, 2), "sq.ft")
+
+# ---------- PARKING ----------
+st.subheader("Parking")
+
+st.write("Parking Required:", parking_required, "Cars")
+
+
+# ---------- FIRE CLASSIFICATION ----------
+if fire_data is not None:
 
     st.subheader("Fire Classification")
-    st.write("Building Category:", fire_category(height_limit))
 
-    st.info(
-        "Note: Floor estimation is Zone-based approximation. "
-        "Final approval subject to statutory authority verification."
+    st.write(
+        "Building Category:",
+        fire_data["building_class"]
     )
+
+    st.write(
+        "Compliance:",
+        fire_data["fire_noc"]
+    )
+
+
+# ---------- NOTE ----------
+st.info(
+    "Note: Floor estimation is Zone-based approximation. "
+    "Final approval subject to statutory authority verification."
+)
