@@ -19,7 +19,7 @@ DesignerLogic.ai
 </h1>
 
 <p style='color: #9aa0a6; font-size: 16px;'>
-AI Assisted Building Compliance & Estimation Tool
+From Plot Data to Project Feasibility
 </p>
 
 </div>
