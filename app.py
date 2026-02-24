@@ -5,11 +5,11 @@ import streamlit as st
 # ---------------------------------------------------
 st.set_page_config(
     page_title="DesignerLogic.ai",
-    layout="centered",
+    layout="centered"
 )
 
 # ---------------------------------------------------
-# CUSTOM CSS (CENTER ALIGN + CLEAN UI)
+# CUSTOM CSS (CENTER ALIGN CONTENT)
 # ---------------------------------------------------
 st.markdown("""
 <style>
@@ -37,7 +37,7 @@ div.stButton > button {
 st.title("DesignerLogic.ai")
 
 st.markdown(
-    "<p style='font-size:18px;'>Plot Data to Project Feasibility</p>",
+    "<p style='font-size:18px;'>AI-Driven Building Feasibility, Compliance & Estimation</p>",
     unsafe_allow_html=True
 )
 
@@ -50,7 +50,7 @@ st.header("Project Inputs")
 
 building_type = st.selectbox(
     "Building Type",
-    ["Residential", "Commercial"]
+    ["Residential", "Commercial", "Mixed Use"]
 )
 
 plot_area = st.number_input(
@@ -74,19 +74,21 @@ generate = st.button("Generate Feasibility Report")
 # ---------------------------------------------------
 if generate:
 
-    # Basic zoning assumptions
+    # ---- Zoning Logic (Sample Rule Engine) ----
     if road_width < 9:
         fsi = 1.5
         height_limit = 10
         floors = 3
         setback_front = 3
         setback_side = 1.5
+
     elif road_width < 18:
         fsi = 2.5
         height_limit = 20
         floors = 6
         setback_front = 5
         setback_side = 3
+
     else:
         fsi = 3.5
         height_limit = 30
@@ -94,6 +96,7 @@ if generate:
         setback_front = 7
         setback_side = 4
 
+    # ---- Area Calculations ----
     total_builtup = plot_area * fsi
     typical_floor = total_builtup / floors
     sellable_area = total_builtup * 0.85
@@ -128,9 +131,11 @@ if generate:
     st.markdown(f"**Side:** `{setback_side}`")
 
     # ---------------------------------------------------
-    # FIRE CLASSIFICATION (ONLY NON-RESIDENTIAL)
+    # FIRE CLASSIFICATION
+    # (NOT REQUIRED FOR RESIDENTIAL)
     # ---------------------------------------------------
-    if building_type != "Residential":
+    if building_type in ["Commercial", "Mixed Use"]:
+
         st.subheader("Fire Classification")
 
         if height_limit <= 15:
