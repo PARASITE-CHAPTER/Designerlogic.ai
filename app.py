@@ -1,148 +1,172 @@
 import streamlit as st
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER
+import io
 
-# ---------------------------------------------------
-# PAGE CONFIG
-# ---------------------------------------------------
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="DesignerLogic.ai",
+    page_title="Designerlogic.ai",
     layout="centered"
 )
 
-# ---------------------------------------------------
-# CUSTOM CSS (CENTER ALIGN CONTENT)
-# ---------------------------------------------------
+# ---------------- CUSTOM CSS ----------------
 st.markdown("""
 <style>
 
-.block-container{
-    max-width: 850px;
+.main {
+    max-width: 700px;
     margin: auto;
 }
 
-h1, h2, h3, p {
+.title {
     text-align: center;
+    font-size: 40px;
+    font-weight: 700;
+    margin-bottom: 5px;
 }
 
-div.stButton > button {
-    display: block;
-    margin: auto;
+.subtitle {
+    text-align: center;
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 40px;
+}
+
+.stButton>button {
+    width: 100%;
+    border-radius: 8px;
+    height: 45px;
+    font-size: 16px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------------------------
-# HEADER
-# ---------------------------------------------------
-st.title("DesignerLogic.ai")
-
+# ---------------- HEADER ----------------
 st.markdown(
-    "<p style='font-size:18px;'>AI-Driven Building Feasibility, Compliance & Estimation</p>",
+    "<div class='title'>Designerlogic.ai</div>",
     unsafe_allow_html=True
 )
 
-st.markdown("---")
+st.markdown(
+    "<div class='subtitle'>AI-Powered Building Compliance & Cost Intelligence Platform</div>",
+    unsafe_allow_html=True
+)
 
-# ---------------------------------------------------
-# PROJECT INPUTS
-# ---------------------------------------------------
+# ---------------- PDF FUNCTION ----------------
+def create_pdf(data):
+
+    buffer = io.BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=72,
+    )
+
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        name="CenterTitle",
+        parent=styles["Title"],
+        alignment=TA_CENTER
+    )
+
+    body_style = styles["Normal"]
+
+    story = []
+
+    # Title
+    story.append(Paragraph("Designerlogic.ai", title_style))
+    story.append(Spacer(1, 0.3 * inch))
+
+    story.append(Paragraph(
+        "Building Compliance & Estimation Report",
+        styles["Heading2"]
+    ))
+
+    story.append(Spacer(1, 0.3 * inch))
+
+    # Project Details
+    for key, value in data.items():
+        story.append(Paragraph(f"<b>{key}:</b> {value}", body_style))
+        story.append(Spacer(1, 0.15 * inch))
+
+    doc.build(story)
+
+    buffer.seek(0)
+    return buffer
+
+
+# ---------------- FORM ----------------
 st.header("Project Inputs")
+
+project_name = st.text_input("Project Name")
 
 building_type = st.selectbox(
     "Building Type",
-    ["Residential", "Commercial", "Mixed Use"]
+    [
+        "Residential",
+        "Commercial",
+        "Mixed Use",
+        "Industrial",
+        "Institutional"
+    ]
 )
 
-plot_area = st.number_input(
-    "Plot Area (sq.ft)",
-    min_value=1.0,
-    value=1000.0,
-    step=100.0
-)
+plot_area = st.number_input("Plot Area (sq.m)", min_value=0.0)
+builtup_area = st.number_input("Built-up Area (sq.m)", min_value=0.0)
+floors = st.number_input("Number of Floors", min_value=1, step=1)
 
-road_width = st.number_input(
-    "Road Width (m)",
-    min_value=1.0,
-    value=9.0,
-    step=1.0
-)
+# Fire classification hidden for residential
+fire_classification = None
 
-generate = st.button("Generate Feasibility Report")
+if building_type != "Residential":
+    fire_classification = st.selectbox(
+        "Fire Classification",
+        [
+            "Low Hazard",
+            "Moderate Hazard",
+            "High Hazard"
+        ]
+    )
 
-# ---------------------------------------------------
-# CALCULATIONS
-# ---------------------------------------------------
-if generate:
+# ---------------- GENERATE REPORT ----------------
+if st.button("Generate Compliance Report"):
 
-    # ---- Zoning Logic (Sample Rule Engine) ----
-    if road_width < 9:
-        fsi = 1.5
-        height_limit = 10
-        floors = 3
-        setback_front = 3
-        setback_side = 1.5
+    st.success("Report Generated Successfully ✅")
 
-    elif road_width < 18:
-        fsi = 2.5
-        height_limit = 20
-        floors = 6
-        setback_front = 5
-        setback_side = 3
+    summary_data = {
+        "Project Name": project_name,
+        "Building Type": building_type,
+        "Plot Area": f"{plot_area} sq.m",
+        "Built-up Area": f"{builtup_area} sq.m",
+        "Floors": floors,
+    }
 
+    if building_type != "Residential":
+        summary_data["Fire Classification"] = fire_classification
     else:
-        fsi = 3.5
-        height_limit = 30
-        floors = 9
-        setback_front = 7
-        setback_side = 4
+        summary_data["Fire Classification"] = "Not Required (Residential Project)"
 
-    # ---- Area Calculations ----
-    total_builtup = plot_area * fsi
-    typical_floor = total_builtup / floors
-    sellable_area = total_builtup * 0.85
+    st.subheader("Project Summary")
 
-    st.markdown("---")
-    st.header("Feasibility Report")
+    for k, v in summary_data.items():
+        st.write(f"**{k}:** {v}")
 
-    # ---------------------------------------------------
-    # BASIC CONTROLS
-    # ---------------------------------------------------
-    st.subheader("Basic Controls")
+    # -------- CREATE PDF --------
+    pdf_file = create_pdf(summary_data)
 
-    st.markdown(f"**Permissible FSI:** `{fsi}`")
-    st.markdown(f"**Height Limit:** `{height_limit} m`")
-    st.markdown(f"**Estimated Floors (Zone-based):** `{floors}`")
-
-    # ---------------------------------------------------
-    # AREA STATEMENT
-    # ---------------------------------------------------
-    st.subheader("Area Statement")
-
-    st.markdown(f"**Total Built-up Area:** `{total_builtup:,.2f} sq.ft`")
-    st.markdown(f"**Typical Floor Plate:** `{typical_floor:,.2f} sq.ft`")
-    st.markdown(f"**Sellable Area:** `{sellable_area:,.2f} sq.ft`")
-
-    # ---------------------------------------------------
-    # SETBACKS
-    # ---------------------------------------------------
-    st.subheader("Setbacks (m)")
-
-    st.markdown(f"**Front:** `{setback_front}`")
-    st.markdown(f"**Side:** `{setback_side}`")
-
-    # ---------------------------------------------------
-    # FIRE CLASSIFICATION
-    # (NOT REQUIRED FOR RESIDENTIAL)
-    # ---------------------------------------------------
-    if building_type in ["Commercial", "Mixed Use"]:
-
-        st.subheader("Fire Classification")
-
-        if height_limit <= 15:
-            fire_class = "Low Rise"
-        elif height_limit <= 24:
-            fire_class = "Mid Rise"
-        else:
-            fire_class = "High Rise"
-
-        st.markdown(f"**Building Category:** `{fire_class}`")
+    # -------- DOWNLOAD BUTTON --------
+    st.download_button(
+        label="⬇ Download PDF Report",
+        data=pdf_file,
+        file_name=f"{project_name}_Compliance_Report.pdf",
+        mime="application/pdf"
+    )
